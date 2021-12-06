@@ -1,0 +1,231 @@
+Object detection Installation
+
+References:
+1. https://c17hawke.github.io/tfod-setup/
+2. http://collabedit.com/tjj23
+3.https://github.com/lutzroeder/netron
+
+References for TF 2.0
+https://github.com/sourangshupal/Tensorflow2-Object-Detection-Tutorial
+
+
+Steps:
+
+1.Download Models repo with 1.x(clone or download zip file from the below link)
+
+https://github.com/tensorflow/models/tree/v1.13.0
+
+Folder downloaded with name (models-1.13.0.zip) ,extract the folder and rename the folder name as models
+
+In models folder keep only research folder and delete rest all the files and folders so only research folder is available in models folder
+
+2. Download the required model from the model zoo or any other model of your choice from TensorFlow model zoo.
+
+https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md
+https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf1_detection_zoo.md
+
+http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
+
+Download tar file and extract the folder and rename the folder as faster_rcnn
+
+3.### Dataset & utils Download
+
+https://drive.google.com/file/d/12F5oGAuQg7qBM_267TCMt_rlorV-M7gf/view?usp=sharing 
+
+Folder utils.zip downloaded and extract the folder and rename it as utils.
+
+4. Create a folder structure.
+
+a. Create a folder name TFOD on Desktop
+b. Move all the folders downloaded above(models,faster_rcnn,utils) 
+
+5.Create virtual environment using conda
+
+conda create -n your_env_name python=3.6
+
+conda activate your_env_name
+
+now you will be in new environment.
+
+6.pip freeze
+To check environment is isolated or not ie. to check environment is blank or not.Fresh environment should be blank
+(you get certici==xxx)
+
+7. Download labelimg tool for labelling images from here.
+(https://tzutalin.github.io/labelImg/)
+For windows yoy download Windows_v1.8.0
+This file need not to be in folder structure but remember where you saved.
+For ubuntu users follow steps from here(https://github.com/tzutalin/labelImg)
+
+8. Install the following packages in your new environment
+
+pip install pillow lxml Cython contextlib2 jupyter matplotlib pandas opencv-python tensorflow==1.14.0
+
+9. Install protobuf using conda package manager-
+(Protobuf package is to convert protobuf files to python files so our compiler understand)
+
+conda install -c anaconda protobuf
+
+10.check present working directoy
+
+pwd
+
+11.Change working directory to TFOD where we saved complete folder structure
+
+cd C:\Users\User\Desktop\TFOD\models\research
+
+12. For protobuff to .py conversion download from a tool from here-
+
+In research directory as current directory you run below command
+
+For windows
+
+protoc object_detection/protos/*.proto --python_out=.
+
+13. List all the files in research folder
+
+ls
+
+14.Install object detection setup in our local system
+
+python setup.py install
+
+15.To do verification whether object detection setup is properly done or not
+
+In research directory give below command to open jupyter notebook
+
+jupyter notebook 
+
+16.In research filder through jupyter notebook you will find a folder called object detection.
+
+In object detection folder there is a jupyter notebook with name object_detection_tutorial.ipynb
+
+You execute the jupyter notebook without any errors then your setup is successfully installed.
+
+17.Move the faster rccn folder in TFOD directory to models/research directory
+
+18. Now go to utils folders and copy all files (4 files 2 folders,2 files) to models/research directory
+
+19.In step 7 Labelimg which we downloaded(Annoatation tool)
+
+In windows: open that file and double click on that labelimg.exe then it open interface window
+
+In linux:go to labelimg folder and open terminal from that
+
+conda activate labelimg
+python labelimg.py
+
+20. Once annotation tool (Labelimg) open select the open Dir and then all images in directory will open in annotation tool then create a rectangle box for each object and label it with a name and save it in PascalVOC format(xml files)
+
+21. Go to research folder and check xml_to_csv.py file is there or not
+
+22.Now cd to the research folder and run the following python file-
+To convert all xml files to single csv
+python xml_to_csv.py
+then csv file is saved in images foleder where our train, test folders are available
+
+23. Run the following to generate train and test records
+
+To convert csv file to TF record files(TF record files is files is in binary format where TF understands the files).
+
+from the research folder-
+
+python generate_tfrecord.py --csv_input=images/train_labels.csv --image_dir=images/train --output_path=train.record
+python generate_tfrecord.py --csv_input=images/test_labels.csv --image_dir=images/test --output_path=test.record
+
+files will be saved in research folder.
+
+24.You need to open generate_tfrecord.py file and update the file with labels in # to do replace this with label map section with our current project
+
+25.Start the training process (we need some files to copy)
+
+In object detection there is a folder called legacy inside that there is a file called train.py
+
+we have to run train.py for training
+
+we need to copy train.py file in research folder
+
+then we have to look for configs file
+
+research-->object detection-->samples-->configs
+
+we have to copy faster_rcnn_inception_v2_coco.config file as we are using faster_rcnn_inception_v2_coco model
+
+(for each model respective config file exists in above model)
+
+26. some error comes ModuleNotFoundError: No module named 'nets'
+
+To avoid that error inside research folder there is a folder called slim
+
+in slim we have to copy folders nets and deployment and paste it in research folder
+
+note:
+
+to check space utilized 
+in research folder in cmd command
+free -m
+
+
+the config file we have to copy to research-->training folder
+
+in training folder along with saved config file one more file we have labelmap.pbtext
+
+we have to match label info as given earlier in  file and update the file with labels in # to do replace this with label map section with our generate_tfrecord.py file as mentioned in step 24.
+
+Note: object detection-->data there are many pbtxt files where we can use the label information for our project from those file
+
+26. Update config file (total 6 changes)
+
+in line 10 of config file update number of classes
+in line 107 model folder has to be given in our case faster_rcnn
+(fine_tune_checkpoint: "faster_rcnn/model.ckpt")
+in line 122 we have to give train.record in tf_record_input_reader input path
+(input_path: "train.record")
+in line 124 we have to give label_map_path
+(label_map_path: "training/labelmap.pbtxt")
+same way 
+in line 136 test.record
+(input_path: "test.record")
+in line 138 
+label_map_path: "training/labelmap.pbtxt"
+
+27.NOW Run the following command from the research folder. This will start the training in your local system-
+
+(python train.py --logtostderr --train_dir=training/ --pipeline_config_path=training/YOUR_MODEL.config)
+
+python train.py --logtostderr --train_dir=training/ --pipeline_config_path=training/faster_rcnn_inception_v2_coco.config
+
+
+28. cancel the training by ctl+c
+
+and again you want to resume training from last step
+
+you go to models -->research-->training 
+
+in that last step of training files you can see.
+
+eg:model.ckpt-551.data-00000-of-00001 (it is for step 551)
+
+then i will execute command
+
+python train.py --logtostderr --train_dir=training/ --pipeline_config_path=training/faster_rcnn_inception_v2_coco.config
+
+press enter then it will start training from that step 551
+
+29. copy the file export_inference_graph.py from models/research/object detection folder to models/research folder
+
+30. Converting.ckpt file(with last step refer eg step 28) to .pb model file so tensorflow needs the model in .pb format
+
+execute below command
+
+python export_inference_graph.py --input_type image_tensor --pipeline_config_path training/faster_rcnn_inception_v2_coco.config --trained_checkpoint_prefix training/model.ckpt-551 --output_directory mymodel
+
+31.now one folder created with mymodel in research folder
+in that mymodel folder saved model folder is created where yoy have savedmodel.pb and variables.
+Also we have frozen_inference_graph.pb where we use this file for inference(prediction)
+
+32. To do predictions using TF you need model file and label map file
+
+copy object detection jupyter notebook from object detection folder and copy in research folder.
+
+create a folder test_images in research for testing purpose and copy few images in that folder 
